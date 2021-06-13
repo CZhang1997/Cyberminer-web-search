@@ -80,7 +80,7 @@ app.secret_key = 'secret key'
 def main():   
      return render_template('home.html')
     
-@app.route("/search", methods=['POST', 'GET'])
+@app.route("/search", methods=['POST'])
 def search():
     try:
 
@@ -94,13 +94,18 @@ def search():
         
         cursor.execute("SELECT * FROM tbl_test where title like %s or description like %s ",('%'+_keyword+'%','%'+_keyword+'%'))
         data = cursor.fetchall()
-
         if len(data)>= 0 :
-            conn.commit()
-            return render_template('home.html',results=data, keyword=_keyword)
+            row_headers=[x[0] for x in cursor.description]
+            json_data=[]
+            count = 0
+            for result in data:
+                json_data.append(dict(zip(row_headers,result)))
+                count +=1
+                if count == 10:
+                    break
+            return json.dumps({"message":"get Successful", "data":json_data}) 
         else:
             return render_template ('error.html', error='no search result')
-
     except Exception as e:
         return render_template('error.html',error = str(e))
     finally:
