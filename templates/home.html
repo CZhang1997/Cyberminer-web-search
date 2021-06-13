@@ -21,11 +21,12 @@
         
         <div class="text-center"><h1 class="text-success">Cyberminer</h1></div>
         <div class="text-center">
-            <form class="form-inline " action="/search" method="post">
+            <form class="form-inline justify-content-center" action="/search" method="post">
                 <input class="form-control" id="search" name="search" type="search" placeholder="Search.." aria-label="Search">
-                 <button  class="btn my-2 my-sm-0 text-primary" type="submit">Search</button>
+                <button  class="btn my-2 my-sm-0 text-primary" type="submit">Search</button>
             </form>
         </div>
+        <hr>
     </div>
 </header>
 
@@ -39,8 +40,10 @@
                 <h3>{{result[1]}}</h3>
             </a>
             <div class="caption left">
-                <p>{{ result[2] }}</p>               
+                <p>{{ result[2] }}</p>
+                               
             </div>
+           
         {% endfor %}
     </div>
 </div>
