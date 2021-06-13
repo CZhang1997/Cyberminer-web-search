@@ -5,8 +5,11 @@ from flask import jsonify
 import math
 import csv
 import config
+import time
+import atexit
+import requests
 
-
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
@@ -50,6 +53,26 @@ except Exception as e:
 finally:
     cursor.close()
     conn.close()
+
+def clean_out_of_date_url():
+    conn = mysql.connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tbl_test")
+    data = cursor.fetchall()
+    for result in data:
+        request = requests.get(result[3])
+        if request.status_code != 200:
+            print("removing", result[3])
+            cursor.execute("DELETE FROM tbl_test WHERE id = %s", ( result[0]))
+            conn.commit()
+    cursor.close()
+    conn.close()
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=clean_out_of_date_url, trigger="interval", seconds=config.OUT_OF_DATE_URL_CLEAN_INTERVAL)
+scheduler.start()
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 app.secret_key = 'secret key'
 
