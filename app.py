@@ -107,6 +107,39 @@ def search():
         cursor.close()
         conn.close()
 
+@app.route("/predict", methods=['POST'])
+def predict():
+    try:
+
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        if(not "search" in request.form):
+            return  redirect("/")
+        _keyword = request.form['search']
+        if(not(_keyword and _keyword.strip())):
+            return  redirect("/")
+        
+        cursor.execute("SELECT * FROM tbl_test where title like %s ",('%'+_keyword+'%'))
+        data = cursor.fetchall()
+
+        if len(data)>= 0 :
+            row_headers=[x[0] for x in cursor.description]
+            json_data=[]
+            count = 0
+            for result in data:
+                json_data.append(dict(zip(row_headers,result)))
+                count +=1
+                if count == 10:
+                    break
+            return json.dumps({"message":"get Successful", "data":json_data}) 
+        else:
+            return render_template ('error.html', error='no search result')
+
+    except Exception as e:
+        return render_template('error.html',error = str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
 
 if __name__ == "__main__":

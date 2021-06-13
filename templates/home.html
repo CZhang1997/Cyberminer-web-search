@@ -16,6 +16,38 @@
       crossorigin="anonymous"
     />
     <link rel="stylesheet" type="text/css" href="../static/gfstyle.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+      $(document).ready(() => {
+        function getPrediction(data) {
+          $.ajax({
+            url: "/predict",
+            type: "POST",
+            data: data,
+            success: function (response) {
+              const { message = "", data = [] } = JSON.parse(response);
+              $("#datalistOptions").children().remove();
+              console.log(data);
+              if (data.length == 1) return;
+              for (var i = 0; i < 10; i++) {
+                const { title } = data[i];
+                $("#datalistOptions").append(
+                  `<option value="${title}"></option>`
+                );
+              }
+            },
+            error: function (err) {
+              console.log(err);
+            },
+          });
+        }
+        $("#search").on("input", function () {
+          const val = $("#search").val();
+          if (!val) return;
+          getPrediction({ search: $("#search").val() });
+        });
+      });
+    </script>
   </head>
 
   <body>
@@ -30,6 +62,7 @@
           >
             <input
               class="form-control"
+              list="datalistOptions"
               id="search"
               name="search"
               type="search"
@@ -37,6 +70,8 @@
               aria-label="Search"
               value="{{keyword}}"
             />
+            <datalist id="datalistOptions"> </datalist>
+
             <button class="btn my-2 my-sm-0 text-primary" type="submit">
               Search
             </button>
