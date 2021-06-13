@@ -17,7 +17,7 @@ app.config['MYSQL_DATABASE_USER'] = config.MYSQL_DATABASE_USER
 app.config['MYSQL_DATABASE_PASSWORD'] = config.MYSQL_DATABASE_PASSWORD
 app.config['MYSQL_DATABASE_DB'] = config.MYSQL_DATABASE_DB
 app.config['MYSQL_DATABASE_HOST'] = config.MYSQL_DATABASE_HOST
-app.config['MYSQL_DATABASE_PORT'] = config.MYSQL_DATABASE_PORT2
+app.config['MYSQL_DATABASE_PORT'] = config.MYSQL_DATABASE_PORT
 mysql.init_app(app) 
 
 # set up
@@ -45,7 +45,7 @@ try:
 except Exception as e:
     print(e)
     cursor.execute("CREATE TABLE tbl_test( id INT AUTO_INCREMENT PRIMARY KEY, title text , description text,url text);")
-    print("please try again, table has been create")
+    print("please try again, table has been created")
     exit()
 finally:
     cursor.close()
