@@ -92,7 +92,7 @@ def search():
         if(not(_keyword and _keyword.strip())):
             return  redirect("/")
         
-        cursor.execute("SELECT * FROM tbl_test where title like %s or description like %s ",('%'+_keyword+'%','%'+_keyword+'%'))
+        cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ",('%'+_keyword+'%','%'+_keyword+'%'))
         data = cursor.fetchall()
         if len(data)>= 0 :
             row_headers=[x[0] for x in cursor.description]
@@ -124,7 +124,7 @@ def predict():
         if(not(_keyword and _keyword.strip())):
             return  redirect("/")
         
-        cursor.execute("SELECT * FROM tbl_test where title like %s ",('%'+_keyword+'%'))
+        cursor.execute("SELECT * FROM tbl_test where title like BINARY %s ",('%'+_keyword+'%'))
         data = cursor.fetchall()
 
         if len(data)>= 0 :
