@@ -19,6 +19,48 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
       $(document).ready(() => {
+        const pageSizeSelect = $("#pageSizeSelect");
+        const searchInput = $("#search");
+        const resultList = $("#result");
+        const predictWords = $("#datalistOptions");
+        const paginationUI = $("#paginationUI");
+        var searchResults = [];
+        var numberPerPage = Number(pageSizeSelect.val());
+        var currentPage = 1;
+
+        const refresh = () => {
+          displayList();
+          buildPagination();
+        };
+
+        const buildPagination = () => {
+          const left = currentPage - 1;
+          const right = currentPage + 1;
+
+          var maxPage = parseInt(searchResults.length / numberPerPage) + 1;
+          var maxPage =
+            searchResults.length % numberPerPage === 0 ? maxPage - 1 : maxPage;
+          paginationUI.children().remove();
+          paginationUI.append(`
+          <li class="page-item ${
+            currentPage === 1 ? "disabled" : ""
+          }"><a class="page-link" id="leftPage" >${left}</a></li>
+          <li class="page-item active" aria-current="page">
+            <a class="page-link" >${currentPage}</a>
+          </li>
+          <li class="page-item ${
+            currentPage === maxPage ? "disabled" : ""
+          }"><a class="page-link" id="rightPage">${right}</a></li>`);
+          $("#leftPage").click(() => {
+            currentPage -= 1;
+            refresh();
+          });
+          $("#rightPage").click(() => {
+            currentPage += 1;
+            refresh();
+          });
+        };
+
         function getPrediction(data) {
           $.ajax({
             url: "/predict",
@@ -26,13 +68,11 @@
             data: data,
             success: function (response) {
               const { message = "", data = [] } = JSON.parse(response);
-              $("#datalistOptions").children().remove();
+              predictWords.children().remove();
               if (data.length == 1) return;
               for (var i = 0; i < data.length && i < 10; i++) {
                 const { title } = data[i];
-                $("#datalistOptions").append(
-                  `<option value="${title}"></option>`
-                );
+                predictWords.append(`<option value="${title}"></option>`);
               }
             },
             error: function (err) {
@@ -40,6 +80,24 @@
             },
           });
         }
+        const displayList = () => {
+          resultList.children().remove();
+          const start = (currentPage - 1) * numberPerPage;
+          for (
+            var i = start;
+            i < start + numberPerPage && i < searchResults.length;
+            i++
+          ) {
+            const { title = "", description = "", url = "" } = searchResults[i];
+            resultList.append(` <a href="${url}">
+                      <h3>${title}</h3>
+                    </a>
+                    <div class="caption left">
+                      <p>${description}</p>
+                    </div>`);
+          }
+          predictWords.children().remove();
+        };
 
         function search(data) {
           $.ajax({
@@ -48,34 +106,28 @@
             data: data,
             success: function (response) {
               const { message = "", data = [] } = JSON.parse(response);
-              $("#result").children().remove();
-              data.forEach((record) => {
-                const { title, description, url } = record;
-                $("#result").append(` <a href="${url}">
-          <h3>${title}</h3>
-        </a>
-        <div class="caption left">
-          <p>${description}</p>
-        </div>`);
-              });
-              $("#datalistOptions").children().remove();
+              searchResults = data;
+              refresh();
             },
             error: function (err) {
               console.log(err);
             },
           });
         }
-        $("#search").on("input", function () {
-          const val = $("#search").val();
+        searchInput.on("input", function () {
+          const val = searchInput.val();
           if (!val) return;
-          getPrediction({ search: $("#search").val() });
+          getPrediction({ search: searchInput.val() });
         });
         $("#searchForm").submit((e) => {
           e.preventDefault();
-          console.log(e);
-          const val = $("#search").val();
+          const val = searchInput.val();
           if (!val) return;
-          search({ search: $("#search").val() });
+          search({ search: searchInput.val() });
+        });
+        pageSizeSelect.change((e) => {
+          numberPerPage = Number(pageSizeSelect.val());
+          refresh();
         });
       });
     </script>
@@ -109,22 +161,36 @@
           </form>
         </div>
         <hr />
+        <div>
+          Number of results per page
+          <select
+            class="form-select"
+            aria-label="page size selector"
+            id="pageSizeSelect"
+          >
+            <option selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+          </select>
+        </div>
       </div>
     </header>
 
     <div class="container-fluid">
       <div></div>
       <div id="result">
-        {% for result in results %}
-        <a href="{{ result[3] }}">
-          <h3>{{result[1]}}</h3>
-        </a>
-        <div class="caption left">
-          <p>{{ result[2] }}</p>
-        </div>
-
-        {% endfor %}
+        <h1 style="text-align: center; padding: 100px; color: turquoise">
+          Quick Search on Cyberminer
+        </h1>
       </div>
+      <nav aria-label="...">
+        <ul
+          class="pagination"
+          id="paginationUI"
+          style="justify-content: center"
+        ></ul>
+      </nav>
     </div>
 
     <footer>

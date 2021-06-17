@@ -101,7 +101,7 @@ def search():
             for result in data:
                 json_data.append(dict(zip(row_headers,result)))
                 count +=1
-                if count == 10:
+                if count == 25:
                     break
             return json.dumps({"message":"get Successful", "data":json_data}) 
         else:
