@@ -8,6 +8,7 @@ import config
 import time
 import atexit
 import requests
+from pytrends.request import TrendReq
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -22,7 +23,7 @@ app.config['MYSQL_DATABASE_DB'] = config.MYSQL_DATABASE_DB
 app.config['MYSQL_DATABASE_HOST'] = config.MYSQL_DATABASE_HOST
 app.config['MYSQL_DATABASE_PORT'] = config.MYSQL_DATABASE_PORT
 mysql.init_app(app) 
-
+pytrend = TrendReq()
 # set up
 
 def deEmojify(inputString):
@@ -121,8 +122,8 @@ def search():
 def predict():
     try:
 
-        conn = mysql.connect()
-        cursor = conn.cursor()
+        # conn = mysql.connect()
+        # cursor = conn.cursor()
         if(not "search" in request.form):
             return  redirect("/")
         _keyword = request.form['search']
@@ -130,27 +131,30 @@ def predict():
             return  redirect("/")
         # Filtering out symbols that are not meaningful 
         _keyword = deEmojify(_keyword).strip()
-        cursor.execute("SELECT * FROM tbl_test where title like BINARY %s ",('%'+_keyword+'%'))
-        data = cursor.fetchall()
-
+        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s ",('%'+_keyword+'%'))
+        # data = cursor.fetchall()
+        json_data=[]
+        suggestList = pytrend.suggestions(keyword=_keyword)
+        for a in suggestList:
+            json_data.append(a)
         if len(data)>= 0 :
-            row_headers=[x[0] for x in cursor.description]
-            json_data=[]
-            count = 0
-            for result in data:
-                json_data.append(dict(zip(row_headers,result)))
-                count +=1
-                if count == 10:
-                    break
+            # row_headers=[x[0] for x in cursor.description]
+            
+            # count = 0
+            # for result in data:
+            #     json_data.append(dict(zip(row_headers,result)))
+            #     count +=1
+            #     if count == 10:
+            #         break
             return json.dumps({"message":"get Successful", "data":json_data}) 
         else:
             return render_template ('error.html', error='no search result')
 
     except Exception as e:
         return render_template('error.html',error = str(e))
-    finally:
-        cursor.close()
-        conn.close()
+    # finally:
+    #     cursor.close()
+    #     conn.close()
 
 
 if __name__ == "__main__":
