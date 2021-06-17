@@ -36,6 +36,7 @@
         const buildPagination = () => {
           const left = currentPage - 1;
           const right = currentPage + 1;
+          if (searchResults.length === 0) return;
 
           var maxPage = parseInt(searchResults.length / numberPerPage) + 1;
           var maxPage =
