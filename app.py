@@ -27,6 +27,7 @@ mysql.init_app(app)
 
 def deEmojify(inputString):
     return inputString.encode('ascii', 'ignore').decode('ascii')
+
 try:
     conn = mysql.connect()
     cursor = conn.cursor()
@@ -92,6 +93,10 @@ def search():
         if(not(_keyword and _keyword.strip())):
             return  redirect("/")
         
+        # Filtering out symbols that are not meaningful 
+        _keyword = deEmojify(_keyword).strip()
+        print(_keyword)
+        
         cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
         data = cursor.fetchall()
         if len(data)>= 0 :
@@ -123,7 +128,8 @@ def predict():
         _keyword = request.form['search']
         if(not(_keyword and _keyword.strip())):
             return  redirect("/")
-        
+        # Filtering out symbols that are not meaningful 
+        _keyword = deEmojify(_keyword).strip()
         cursor.execute("SELECT * FROM tbl_test where title like BINARY %s ",('%'+_keyword+'%'))
         data = cursor.fetchall()
 
