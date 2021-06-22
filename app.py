@@ -9,6 +9,7 @@ import time
 import atexit
 import requests
 from pytrends.request import TrendReq
+import re
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -97,9 +98,13 @@ def search():
         # Filtering out symbols that are not meaningful 
         _keyword = deEmojify(_keyword).strip()
         print(_keyword)
-        
-        cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
-        data = cursor.fetchall()
+        words = re.split(r'And', "a and b", flags=re.IGNORECASE)
+        if len(words) != 0:
+            
+        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
+        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
+        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s and title like %s ORDER BY title ASC",('%'+_keyword+'%','%'+ "face"+'%'))
+        data = cursor.fetchmany(25)
         if len(data)>= 0 :
             row_headers=[x[0] for x in cursor.description]
             json_data=[]
@@ -107,8 +112,6 @@ def search():
             for result in data:
                 json_data.append(dict(zip(row_headers,result)))
                 count +=1
-                if count == 25:
-                    break
             return json.dumps({"message":"get Successful", "data":json_data}) 
         else:
             return render_template ('error.html', error='no search result')
@@ -144,8 +147,6 @@ def predict():
             for result in data:
                 json_data.append(dict(zip(row_headers,result)))
                 count +=1
-                if count == 10:
-                    break
             return json.dumps({"message":"get Successful", "data":json_data}) 
         else:
             return render_template ('error.html', error='no search result')
