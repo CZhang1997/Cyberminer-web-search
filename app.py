@@ -97,18 +97,41 @@ def search():
         
         # Filtering out symbols that are not meaningful 
         _keyword = deEmojify(_keyword).strip()
-        print(_keyword)
-        words = re.split(r'And', "a and b", flags=re.IGNORECASE)
-        if len(words) != 0:
-            
-        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
-        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
-        # cursor.execute("SELECT * FROM tbl_test where title like BINARY %s and title like %s ORDER BY title ASC",('%'+_keyword+'%','%'+ "face"+'%'))
-        data = cursor.fetchmany(25)
-        if len(data)>= 0 :
+
+        json_data=[]
+        words = re.split(r'and|&', _keyword, flags=re.IGNORECASE)
+        if len(words) != 1:
+            cursor.execute("SELECT * FROM tbl_test where (title like BINARY %s and title like BINARY %s) or (description like BINARY %s and description like BINARY %s) ORDER BY title ASC"
+            ,('%'+words[0].strip()+'%','%'+words[1].strip()+'%', '%'+words[0].strip()+'%','%'+words[1].strip()+'%'))
+            data = cursor.fetchmany(config.MAX_RESULT_SIZE)
             row_headers=[x[0] for x in cursor.description]
-            json_data=[]
+            for result in data:
+                json_data.append(dict(zip(row_headers,result)))
+            return json.dumps({"message":"get Successful", "data":json_data})
+        words = re.split(r'or|\|', _keyword, flags=re.IGNORECASE)
+        if len(words) != 1:
+            cursor.execute("SELECT * FROM tbl_test where (title like BINARY %s or title like BINARY %s) or (description like BINARY %s or description like BINARY %s) ORDER BY title ASC"
+            ,('%'+words[0].strip()+'%','%'+words[1].strip()+'%', '%'+words[0].strip()+'%','%'+words[1].strip()+'%'))
+            data = cursor.fetchmany(config.MAX_RESULT_SIZE)
+            row_headers=[x[0] for x in cursor.description]
+            for result in data:
+                json_data.append(dict(zip(row_headers,result)))
+            return json.dumps({"message":"get Successful", "data":json_data})
+        if re.search(r"not", _keyword, flags=re.IGNORECASE):
+            word = re.sub(r'not',  "",_keyword, flags=re.IGNORECASE)
+            cursor.execute("SELECT * FROM tbl_test where title not like BINARY %s and description not like BINARY %s ORDER BY title ASC"
+            ,('%'+word.strip()+'%','%'+word.strip()+'%'))
+            data = cursor.fetchmany(config.MAX_RESULT_SIZE)
+            row_headers=[x[0] for x in cursor.description]
+            for result in data:
+                json_data.append(dict(zip(row_headers,result)))
+            return json.dumps({"message":"get Successful", "data":json_data})
+        
+        cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
+        data = cursor.fetchmany(config.MAX_RESULT_SIZE)
+        if len(data)>= 0 :
             count = 0
+            row_headers=[x[0] for x in cursor.description]
             for result in data:
                 json_data.append(dict(zip(row_headers,result)))
                 count +=1
