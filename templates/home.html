@@ -31,6 +31,7 @@
         const refresh = () => {
           displayList();
           buildPagination();
+          currentPage = 1;
         };
 
         const buildPagination = () => {
@@ -150,6 +151,7 @@
               placeholder="Search.."
               aria-label="Search"
               value="{{keyword}}"
+              style="width: 500px"
             />
             <datalist id="datalistOptions"> </datalist>
 

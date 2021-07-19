@@ -30,6 +30,52 @@ pytrend = TrendReq()
 def deEmojify(inputString):
     return inputString.encode('ascii', 'ignore').decode('ascii')
 
+def getP(i):
+    return "%" + i.strip() + "%"
+def getQuery(q):
+    query = "SELECT * FROM tbl_test where "
+    args = []
+    orList = re.split(r'or|\|', q, flags=re.IGNORECASE)
+    for i in range(len(orList)):
+        query = query + "("
+        andList = re.split(r'and|&', orList[i], flags=re.IGNORECASE)
+        arT = ""
+        arD = ""
+        tlist = []
+        dlist = []
+        containNot = False
+        for j in range(len(andList)):
+            val = andList[j]
+            if re.search(r'not', val):
+                arT = arT + "title not like BINARY %s"
+                arD = arD + "description not like BINARY %s"
+                val = getP(re.sub(r"not","", val))
+                tlist.append(val)
+                dlist.append(val)
+                containNot = True
+            else:
+                arT = arT + "title like BINARY %s"
+                arD = arD + "description like BINARY %s"
+                tlist.append(getP(val))
+                dlist.append(getP(val))
+            if j + 1 != len(andList):
+                arT = arT + " and "
+                arD = arD + " and "
+        if containNot:
+            query =  query + arT + " and " + arD
+        else:
+            query =  query + arT + " or " + arD
+        query = query + ")"
+        args = args + tlist + dlist
+        if i + 1  != len(orList):
+            query = query + " or "
+    query = query + " ORDER BY title ASC"
+    print(query)
+    print(args)
+    args = tuple(args)
+    return query, args
+        
+
 try:
     conn = mysql.connect()
     cursor = conn.cursor()
@@ -99,35 +145,8 @@ def search():
         _keyword = deEmojify(_keyword).strip()
 
         json_data=[]
-        words = re.split(r'and|&', _keyword, flags=re.IGNORECASE)
-        if len(words) != 1:
-            cursor.execute("SELECT * FROM tbl_test where (title like BINARY %s and title like BINARY %s) or (description like BINARY %s and description like BINARY %s) ORDER BY title ASC"
-            ,('%'+words[0].strip()+'%','%'+words[1].strip()+'%', '%'+words[0].strip()+'%','%'+words[1].strip()+'%'))
-            data = cursor.fetchmany(config.MAX_RESULT_SIZE)
-            row_headers=[x[0] for x in cursor.description]
-            for result in data:
-                json_data.append(dict(zip(row_headers,result)))
-            return json.dumps({"message":"get Successful", "data":json_data})
-        words = re.split(r'or|\|', _keyword, flags=re.IGNORECASE)
-        if len(words) != 1:
-            cursor.execute("SELECT * FROM tbl_test where (title like BINARY %s or title like BINARY %s) or (description like BINARY %s or description like BINARY %s) ORDER BY title ASC"
-            ,('%'+words[0].strip()+'%','%'+words[1].strip()+'%', '%'+words[0].strip()+'%','%'+words[1].strip()+'%'))
-            data = cursor.fetchmany(config.MAX_RESULT_SIZE)
-            row_headers=[x[0] for x in cursor.description]
-            for result in data:
-                json_data.append(dict(zip(row_headers,result)))
-            return json.dumps({"message":"get Successful", "data":json_data})
-        if re.search(r"not", _keyword, flags=re.IGNORECASE):
-            word = re.sub(r'not',  "",_keyword, flags=re.IGNORECASE)
-            cursor.execute("SELECT * FROM tbl_test where title not like BINARY %s and description not like BINARY %s ORDER BY title ASC"
-            ,('%'+word.strip()+'%','%'+word.strip()+'%'))
-            data = cursor.fetchmany(config.MAX_RESULT_SIZE)
-            row_headers=[x[0] for x in cursor.description]
-            for result in data:
-                json_data.append(dict(zip(row_headers,result)))
-            return json.dumps({"message":"get Successful", "data":json_data})
-        
-        cursor.execute("SELECT * FROM tbl_test where title like BINARY %s or description like BINARY %s ORDER BY title ASC",('%'+_keyword+'%','%'+_keyword+'%'))
+        query, args = getQuery(_keyword)
+        cursor.execute(query, args)
         data = cursor.fetchmany(config.MAX_RESULT_SIZE)
         if len(data)>= 0 :
             count = 0
