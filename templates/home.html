@@ -31,7 +31,6 @@
         const refresh = () => {
           displayList();
           buildPagination();
-          currentPage = 1;
         };
 
         const buildPagination = () => {
@@ -109,6 +108,7 @@
             success: function (response) {
               const { message = "", data = [] } = JSON.parse(response);
               searchResults = data;
+              currentPage = 1;
               refresh();
             },
             error: function (err) {
